@@ -1,5 +1,7 @@
 import 'package:chat_app/models/user_model.dart';
+import 'package:chat_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -12,27 +14,34 @@ class _UsersScreenState extends State<UsersScreen> {
       RefreshController(initialRefresh: false);
 
   final users = [
-    User(online: true, email: 'test1@test.com', nombre: 'victor', uid: '1'),
-    User(online: true, email: 'test2@test.com', nombre: 'yerson', uid: '2'),
-    User(online: true, email: 'test3@test.com', nombre: 'wiscocho', uid: '3'),
+    Usuario(online: true, email: 'test1@test.com', nombre: 'victor', uid: '1'),
+    Usuario(online: true, email: 'test2@test.com', nombre: 'yerson', uid: '2'),
+    Usuario(
+        online: true, email: 'test3@test.com', nombre: 'wiscocho', uid: '3'),
   ];
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final usuario = authService.usuario;
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Mi nombre',
+        title: Text(
+          usuario.nombre,
           style: TextStyle(color: Colors.black),
         ),
         centerTitle: true,
         elevation: 1,
         backgroundColor: Colors.white,
         leading: IconButton(
-          onPressed: () {},
           icon: const Icon(
             Icons.exit_to_app,
             color: Colors.black,
           ),
+          onPressed: () {
+            //TODO DESCONECTAR EL SOCKET SERVER
+            Navigator.pushReplacementNamed(context, 'login');
+            AuthService.deleteToken();
+          },
         ),
         actions: [
           Container(
@@ -70,7 +79,7 @@ class UserListView extends StatelessWidget {
     required this.users,
   }) : super(key: key);
 
-  final List<User> users;
+  final List<Usuario> users;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +93,7 @@ class UserListView extends StatelessWidget {
 }
 
 class UserListTile extends StatelessWidget {
-  final User usuario;
+  final Usuario usuario;
 
   const UserListTile(this.usuario, {super.key});
 
