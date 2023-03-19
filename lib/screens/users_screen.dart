@@ -1,8 +1,12 @@
-import 'package:chat_app/models/user_model.dart';
-import 'package:chat_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+
+import 'package:chat_app/services/auth_service.dart';
+import 'package:chat_app/services/chat_service.dart';
+import 'package:chat_app/services/socket_servoce.dart';
+import 'package:chat_app/services/usuarios_service.dart';
+import 'package:chat_app/models/user_model.dart';
 
 class UsersScreen extends StatefulWidget {
   @override
@@ -10,24 +14,27 @@ class UsersScreen extends StatefulWidget {
 }
 
 class _UsersScreenState extends State<UsersScreen> {
+  final usuarioService = UsuariosService();
   final RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
-  final users = [
-    Usuario(online: true, email: 'test1@test.com', nombre: 'victor', uid: '1'),
-    Usuario(online: true, email: 'test2@test.com', nombre: 'yerson', uid: '2'),
-    Usuario(
-        online: true, email: 'test3@test.com', nombre: 'wiscocho', uid: '3'),
-  ];
+  List<Usuario> users = [];
+  @override
+  void initState() {
+    _loadUsers();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     final usuario = authService.usuario;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           usuario.nombre,
-          style: TextStyle(color: Colors.black),
+          style: const TextStyle(color: Colors.black),
         ),
         centerTitle: true,
         elevation: 1,
@@ -38,7 +45,7 @@ class _UsersScreenState extends State<UsersScreen> {
             color: Colors.black,
           ),
           onPressed: () {
-            //TODO DESCONECTAR EL SOCKET SERVER
+            socketService.disconnect();
             Navigator.pushReplacementNamed(context, 'login');
             AuthService.deleteToken();
           },
@@ -46,8 +53,9 @@ class _UsersScreenState extends State<UsersScreen> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 10),
-            child: Icon(Icons.check_circle, color: Colors.blue[400]),
-            // child: const Icon(Icons.offline_bolt, color: Colors.red),
+            child: (socketService.serverStatus == ServerStatus.online)
+                ? Icon(Icons.check_circle, color: Colors.blue[400])
+                : const Icon(Icons.offline_bolt, color: Colors.red),
           )
         ],
       ),
@@ -68,6 +76,8 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   _loadUsers() async {
+    users = await usuarioService.getUsuarios();
+    setState(() {});
     await Future.delayed(const Duration(seconds: 1));
     _refreshController.refreshCompleted();
   }
@@ -115,6 +125,11 @@ class UserListTile extends StatelessWidget {
             shape: BoxShape.circle,
             color: usuario.online ? Colors.green[300] : Colors.red),
       ),
+      onTap: () {
+        final chatService = Provider.of<ChatService>(context, listen: false);
+        chatService.usuarioDestino = usuario;
+        Navigator.pushNamed(context, 'chat');
+      },
     );
   }
 }
