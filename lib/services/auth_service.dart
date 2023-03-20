@@ -83,7 +83,7 @@ class AuthService with ChangeNotifier {
     final url = Uri.parse('${Enviroment.apiUrl}/login/renew');
     final resp = await http.get(url, headers: {
       'Content-Type': 'application/json',
-      'x-token': token ?? 'ania'
+      'x-token': token.toString()
     });
 
     if (resp.statusCode == 200) {
